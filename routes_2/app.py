@@ -46,8 +46,8 @@ def route():
             }
         ]
     
-    ##respuesta_aleatoria = random.choice(routes)
-    respuesta_aleatoria = routes[2]
+    respuesta_aleatoria = random.choice(routes)
+    ##respuesta_aleatoria = routes[2]
 
     sendMessageToRoutesVotingQueue( respuesta_aleatoria )
 
@@ -81,4 +81,4 @@ def sendMessageToRoutesVotingQueue( vote ):
     connection.close()
 
 if __name__ == '__main__':
-    app.run(port=5001, debug=True)
+    app.run(port=5002, debug=True)
