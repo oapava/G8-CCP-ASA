@@ -35,7 +35,7 @@ def validate_vote( idRoute ):
         if len(voting[idRoute]) >= 3:
             print(f"✅ Recibidos 3 votos para {idRoute}: {voting[idRoute][0][0]}")
             validateUnique( voting[idRoute][0][0], voting[idRoute][1][0], voting[idRoute][2][0] )
-            del voting[idRoute]  
+            del voting[idRoute]
             break
         
         if time.time() - start_time > TIMEOUT:
