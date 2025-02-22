@@ -10,16 +10,11 @@ def publish_message(payload):
     connection = pika.BlockingConnection(params)
     channel = connection.channel()
 
-    channel.queue_declare(queue=RABBITMQ_QUEUE, durable=True)
-
-    message = json.dumps(payload)
     channel.basic_publish(
-        exchange="",
-        routing_key=RABBITMQ_QUEUE,
-        body=message,
-        properties=pika.BasicProperties(
-            delivery_mode=2,  
-        ),
+        exchange='routes_exchange',
+        routing_key='',
+        body=json.dumps(payload),
+        properties=pika.BasicProperties(delivery_mode=2)
     )
 
     print(f"📦 Mensaje enviado : {payload}")
