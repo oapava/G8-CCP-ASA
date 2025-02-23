@@ -3,13 +3,13 @@ from flask import Flask, jsonify
 import os
 import pika
 import json
-import threading
+import threading  
+import random
 import time
 
-heartBeat = True
+heartBeat = False
 
-heartBeatMessage = {"id":1,"status":200}
-
+heartBeatMessage = {"id":2,"status":200}
 
 app = Flask(__name__)
 
@@ -41,10 +41,10 @@ def selectRoute(route):
     filtered_routes = list(filter(lambda r: r["destination"] == destination_filter, ROUTES))
     filtered_routes[0]['idRoute'] = route['idRoute']
 
-    #random_value = random.choice([ filtered_routes, [{'id': 3, 'origin': '', 'destination': '', 'distance_km': 1000, 'estimated_time_hours': 18, 'status': '','idRoute': route['idRoute']}] ])
+    random_value = random.choice([ filtered_routes, [{'id': 3, 'origin': '', 'destination': '', 'distance_km': 1000, 'estimated_time_hours': 18, 'status': '','idRoute': route['idRoute']}] ])
 
     if filtered_routes:
-        sendMessageToRoutesVotingQueue(filtered_routes)
+        sendMessageToRoutesVotingQueue( random_value )
     else:
         print(f"❌ No se encontró ninguna ruta con destino '{route['destination']}'")
 
@@ -113,7 +113,6 @@ def main(request):
     while True:
         time.sleep(3600)
 
-
 if __name__ == '__main__':
     print("🚀 Servicio Flask iniciado en puerto 5001...")
-    app.run(port=5001, debug=True)
+    app.run(port=5002, debug=True)
