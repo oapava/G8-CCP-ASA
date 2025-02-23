@@ -12,7 +12,7 @@ def main(request):
     return jsonify({"Succes": "Monitoreando componente customer"}), 200
 
 # URL del servicio
-SERVICE_URL = "https://routes-queue-1075292097466.us-central1.run.app/customers"
+SERVICE_URL = "https://customer-1075292097466.us-central1.run.app/customers"
 INTERVAL_SECONDS = 10  
 
 # Datos del cliente
