@@ -4,63 +4,82 @@ import json
 import time
 import threading
 import logging
+import sys
 
-log_filename = "componentsFail.log"
-
-if os.path.exists(log_filename):
-    with open(log_filename) as log_file:
-        pass
-
+# Configurar logging para Cloud Run
 logging.basicConfig(
-    filename=log_filename,
-    level=logging.CRITICAL,
-    format='%(asctime)s %(levelname)s %(name)s %(message)s',
-    datefmt="%Y-%m-%d %H:%M:%S"
-    )
+    level=logging.INFO,
+    format='%(asctime)s [%(threadName)s] %(levelname)s: %(message)s',
+    datefmt="%Y-%m-%d %H:%M:%S",
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
 
 CLOUDAMQP_URL = os.environ.get(
-    'CLOUDAMQP_URL', 'amqps://wvvfljaz:w9AfQi2yFo_obuplLkkV8HjKNrt7GA3M@moose.rmq.cloudamqp.com/wvvfljaz')
+    'CLOUDAMQP_URL',
+    'amqps://wvvfljaz:w9AfQi2yFo_obuplLkkV8HjKNrt7GA3M@moose.rmq.cloudamqp.com/wvvfljaz'
+)
 
-params = pika.URLParameters(CLOUDAMQP_URL)
-connection = pika.BlockingConnection(params)
-channel = connection.channel()
+# Diccionario para monitorear heartbeats
 hearthbeat = {
-    1:{"time":0},
-    2:{"time":0},
-    3:{"time":0}
+    1: {"time": 0},
+    2: {"time": 0},
+    3: {"time": 0}
 }
 
-channel.queue_declare(queue='routes_voting_heartbeat', durable=True)
 
 def callback(ch, method, properties, body):
+    """ Maneja los mensajes recibidos de RabbitMQ """
     resultado = json.loads(body.decode())
     if resultado["status"] == 200:
         hearthbeat[resultado["id"]]["time"] = 0
-    print(f"Se recibio hearthbeat del componente de rutas #{resultado['id']}, con estado {resultado['status']}")
-    print(hearthbeat)
+    logging.info(f"✅ Recibido heartbeat del componente #{resultado['id']} con estado {resultado['status']}")
+    logging.info(f"📊 Estado actual: {hearthbeat}")
 
-channel.basic_consume(
-    queue='routes_voting_heartbeat',
-    on_message_callback=callback,
-    auto_ack=True
-)
 
 def log_status():
+    """ Monitorea los heartbeats y registra en logs si un componente está inactivo """
     while True:
         time.sleep(30)
-        hearthbeat[1]['time'] += 30
-        hearthbeat[2]['time'] += 30
-        hearthbeat[3]['time'] += 30
-        print("Mensaje cada 30 segundos")
-        print(hearthbeat)
-        for x in range(1,4):
+        for x in range(1, 4):
+            hearthbeat[x]['time'] += 30
+        logging.info("🔄 Revisión cada 30 segundos")
+        logging.info(f"📊 Estado actual: {hearthbeat}")
+        for x in range(1, 4):
             if hearthbeat[x]["time"] >= 60:
-                logging.critical(f"El componente {x} esta inactivo, desde hace {hearthbeat[x]['time']} segundos no manda señale de vida")
+                logging.critical(f"⚠️ Componente {x} INACTIVO desde hace {hearthbeat[x]['time']} segundos")
 
 
+def start_rabbitmq_consumer():
+    """ Mantiene la conexión a RabbitMQ y reintenta en caso de fallo """
+    while True:
+        try:
+            params = pika.URLParameters(CLOUDAMQP_URL)
+            connection = pika.BlockingConnection(params)
+            channel = connection.channel()
+            channel.queue_declare(queue='routes_voting_heartbeat', durable=True)
+            channel.basic_consume(
+                queue='routes_voting_heartbeat',
+                on_message_callback=callback,
+                auto_ack=True
+            )
+            logging.info("📡 Escuchando mensajes de RabbitMQ...")
+            channel.start_consuming()
+        except Exception as e:
+            logging.error(f"⚠️ Error en RabbitMQ: {e}. Reintentando en 5 segundos...")
+            time.sleep(5)  # Esperar antes de reintentar
 
-status_thread = threading.Thread(target=log_status, daemon=True)
-status_thread.start()
 
-print("Esperando mensajes")
-channel.start_consuming()
+def main(request):
+    # 🧵 Hilo para monitorear heartbeats
+    status_thread = threading.Thread(target=log_status, daemon=True, name="Monitor-Heartbeats")
+    status_thread.start()
+
+    # 🧵 Hilo para consumir mensajes de RabbitMQ con reconexión automática
+    consumer_thread = threading.Thread(target=start_rabbitmq_consumer, daemon=True, name="RabbitMQ-Consumer")
+    consumer_thread.start()
+
+    # 🔄 Mantener el servicio en ejecución
+    while True:
+        time.sleep(3600)
+
+    return {"status": "Se recibio el mensaje"}

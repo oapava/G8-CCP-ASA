@@ -3,6 +3,11 @@ import os
 import pika
 import json
 import threading
+import time
+
+heartBeat = True
+
+heartBeatMessage = {"id":3,"status":200}
 
 app = Flask(__name__)
 
@@ -74,7 +79,37 @@ def start_consumer():
     consumer_channel.basic_consume(queue=queue_name, on_message_callback=callback, auto_ack=False)
     consumer_channel.start_consuming()
 
-threading.Thread(target=start_consumer, daemon=True).start()
+def start_status():
+    while True:
+        time.sleep(30)
+        if heartBeat:
+            """ Envía un mensaje a la cola 'routes_voting' en RabbitMQ. """
+            connection = pika.BlockingConnection(params)
+            channel = connection.channel()
+            channel.queue_declare(queue='routes_voting_heartbeat', durable=True)
+
+            channel.basic_publish(
+                exchange='',
+                routing_key='routes_voting_heartbeat',
+                body=json.dumps(heartBeatMessage),
+                properties=pika.BasicProperties(delivery_mode=2)
+            )
+            print(f"✅ Mensaje enviado a 'routes_voting_heartbeat': {heartBeatMessage}")
+
+            connection.close()
+
+def main(request):
+    """ Configurar todos los hilos  """
+    # Thread para el consumidor de la cola routes_exchange
+    consumer_thread = threading.Thread(target=start_consumer, daemon=True)
+    consumer_thread.start()
+
+    # Thread para enviar al heartbeat
+    status_thread = threading.Thread(target=start_status, daemon=True)
+    status_thread.start()
+
+    while True:
+        time.sleep(3600)
 
 if __name__ == '__main__':
     print("🚀 Servicio Flask iniciado en puerto 5003...")
