@@ -1,11 +1,18 @@
+import functions_framework
 import requests
 import time
 from datetime import datetime
 import json
 import random
 
+@functions_framework.http
+def main(request):
+    path = request.path
+    bucle()
+    return jsonify({"Succes": "Monitoreando componente customer"}), 200
+
 # URL del servicio
-SERVICE_URL = "http://127.0.0.1:5000/customers"
+SERVICE_URL = "https://routes-queue-1075292097466.us-central1.run.app/customers"
 INTERVAL_SECONDS = 10  
 
 # Datos del cliente
@@ -53,8 +60,9 @@ def check_service():
     except Exception as e:
         print(f"[{datetime.now()}] ❗ ERROR Desconocido: {str(e)}")
 
-# Bucle de monitoreo
-print(f"🔍 Iniciando monitor para {SERVICE_URL} cada {INTERVAL_SECONDS} segundos...\n")
-while True:
-    check_service()
-    time.sleep(INTERVAL_SECONDS)
+def bucle():
+    # Bucle de monitoreo
+    print(f"🔍 Iniciando monitor para {SERVICE_URL} cada {INTERVAL_SECONDS} segundos...\n")
+    while True:
+        check_service()
+        time.sleep(INTERVAL_SECONDS)

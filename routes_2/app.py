@@ -1,3 +1,4 @@
+import functions_framework
 from flask import Flask, jsonify
 import os
 import pika

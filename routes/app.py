@@ -1,8 +1,12 @@
+import functions_framework
 from flask import Flask, jsonify
 import os
 import pika
 import json
-import threading  
+import threading
+
+
+
 
 app = Flask(__name__)
 
