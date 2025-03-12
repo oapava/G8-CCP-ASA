@@ -18,7 +18,6 @@ def check_order_status():
         print("Se requiere user_code y order_code")
         return jsonify({"error": "Se requiere user_code y order_code"}), 400
 
-    # Simulación de una respuesta pidiendo el código de autorización
     return jsonify({"message": "Por favor ingrese su codigo de autorización", "user_code": user_code}), 200
 
 # Endpoint para verificar el código de autorización
@@ -53,11 +52,20 @@ def verify_authorization():
         else:
             return jsonify({"message": "Autorizacion fallida, intenete de nuevo", "user_code": user_code}), 401
 
-# Función para simular la llamada a un endpoint de alerta
+
 def trigger_alert(user_code):
-    # Simulación de una llamada a un endpoint de alerta
     print(f"ALERT: Unauthorized access attempt detected for user {user_code}")
-    requests.post('https://enpoint.com/alert', json={"user_code": user_code, "status": "RATE_LIMIT", "message": "Intento de acceso no autorizado detectado"})
+
+    try:
+        response = requests.post(
+            'http://localhost:5006/api/customer-order-notification',
+            json={"user_code": user_code, "status": "RATE_LIMIT", "message": "Intento de acceso no autorizado detectado"},
+            timeout=10
+        )
+
+        print(f"Respuesta alerta status Code: {response.status_code} - Response Body: {response.text}")
+    except requests.exceptions.RequestException as e:
+        print(f"Failed to send alert: {e}")
 
 if __name__ == '__main__':
     app.run(debug=True)
