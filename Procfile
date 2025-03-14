@@ -1,1 +1,1 @@
-web: cd customerOrders && gunicorn app:app
+web: gunicorn customerOrders.app:app
