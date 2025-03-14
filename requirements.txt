@@ -1,2 +1,2 @@
-Flask
-requests
+gunicorn==23.0.0
+packaging==24.2

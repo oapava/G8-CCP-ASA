@@ -1,1 +1,1 @@
-web: gunicorn customerOrders.app:app
+web: gunicorn server:app
