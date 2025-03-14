@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request
 
-
 app = Flask(__name__)
+
 USER = {
     "id": 126542,
     "name": "Omar Pava",
@@ -14,12 +14,11 @@ USER = {
             "city": "BOG",
             "country": "COL",
             "coordinates": {
-                "lat":1332135,
-                "lon":546543543654
+                "lat": 1332135,
+                "lon": 546543543654
             }
         }
     ]
-
 }
 
 @app.route('/api/customer-order-notification', methods=['POST'])
@@ -29,24 +28,18 @@ def get_alert():
 
     data = request.get_json()
 
-    if "status" not in data or "message" not in data  or "user_code" not in data:
+    if "status" not in data or "message" not in data or "user_code" not in data:
         return jsonify({"error": "Faltan los campos 'status', 'user code' o 'message'"}), 400
-    
-    respuesta_envio = send_alert_to_customer( data )
 
-    return respuesta_envio
+    return send_alert_to_customer(data)
 
-
-def send_alert_to_customer( data ):
-    ##Consultar en la "BD" el usaurio
-    if USER['id'] == data['user_code']: 
-        send_alert = ""
+def send_alert_to_customer(data):
+    if USER['id'] == data['user_code']:
         message_confirm = {
             "status": 200,
             "message": f"Se ha alertado al usuario {USER['id']} sobre el acceso a su cuenta"
         }
-        return jsonify(message_confirm), 200 
-    
+        return jsonify(message_confirm), 200
     else:
         respuesta_fallida = {
             "status": 404,
@@ -54,6 +47,7 @@ def send_alert_to_customer( data ):
         }
         return jsonify(respuesta_fallida), 400
 
-
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5006) 
+    from os import environ
+    port = int(environ.get("PORT", 5006))  # Heroku asigna automáticamente el puerto
+    app.run(host='0.0.0.0', port=port)
