@@ -58,7 +58,7 @@ def trigger_alert(user_code):
 
     try:
         response = requests.post(
-            'http://localhost:5006/api/customer-order-notification',
+            'https://ccp-customer-order-not-6c19ecb88309.herokuapp.com/api/customer-order-notification',
             json={"user_code": user_code, "status": "RATE_LIMIT", "message": "Intento de acceso no autorizado detectado"},
             timeout=10
         )
