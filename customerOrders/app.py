@@ -22,6 +22,7 @@ def check_order_status():
         logger.error("Se requiere user_code y order_code")
         return jsonify({"error": "Se requiere user_code y order_code"}), 400
 
+    logger.info(f"Acceso ausuario {user_code}, por favor ingrese su codigo OTP de autorización")
     return jsonify({"message": "Por favor ingrese su codigo OTP de autorización", "user_code": user_code}), 200
 
 # Endpoint para verificar el código de autorización
@@ -52,9 +53,10 @@ def verify_authorization():
 
         if authorization_attempts[user_code] >= 2:
             trigger_alert(user_code)
-            logger.warning(f"Intento de acceso no autorizado para user_code: {user_code}")
+            logger.warning(f"Intento 2 de acceso no autorizado para user_code: {user_code}")
             return jsonify({"message": "Autorizacion fallida. enviando alerta", "user_code": user_code}), 403
         else:
+            logger.warning(f"Intento 1 de acceso no autorizado para user_code: {user_code}")
             return jsonify({"message": "Autorizacion fallida, intenete de nuevo", "user_code": user_code}), 401
 
 
